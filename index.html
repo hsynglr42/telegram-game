@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Spike Escape</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #222222;
+            --tg-theme-button-color: #3498db;
+            --tg-theme-button-text-color: #ffffff;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            flex-direction: column;
+        }
+
+        #game-container {
+            width: 90vw;
+            max-width: 500px;
+            height: 250px;
+            background-color: #fff;
+            border: 3px solid #333;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        #player {
+            width: 35px;
+            height: 35px;
+            background-color: #3498db;
+            position: absolute;
+            bottom: 0;
+            left: 50px;
+            border-radius: 6px;
+            transition: transform 0.1s;
+        }
+
+        .obstacle {
+            width: 25px;
+            height: 25px;
+            background-color: #e74c3c;
+            position: absolute;
+            bottom: 0;
+            right: -30px;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        #score-board {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #start-button {
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #27ae60;
+        }
+
+        #start-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #27ae60;
+        }
+
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+
+        #game-over-screen h2 { margin: 0; font-size: 2rem; color: #e74c3c; }
+
+        #restart-button {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="start-button">START GAME</button>
+
+    <div id="game-container">
+        <div class="ground"></div>
+        <div id="player"></div>
+        
+        <div id="game-over-screen">
+            <h2>GAME OVER</h2>
+            <p id="final-score">Score: 0</p>
+            <button id="restart-button">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <div id="score-board">Score: 0</div>
+
+    <script>
+        // Initialize Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Full screen
+
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreBoard = document.getElementById('score-board');
+        const startButton = document.getElementById('start-button');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+
+        let isJumping = false;
+        let playerBottom = 0;
+        let score = 0;
+        let gameOver = true;
+        let gameSpeed = 5;
+        let gameLoopInterval;
+        let obstacleTimeout;
+
+        function startGame() {
+            gameOver = false;
+            score = 0;
+            gameSpeed = 5;
+            scoreBoard.textContent = 'Score: 0';
+            playerBottom = 0;
+            player.style.bottom = '0px';
+            gameOverScreen.style.display = 'none';
+            startButton.style.display = 'none';
+
+            // Clean old obstacles
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+
+            gameLoopInterval = setInterval(updateGame, 20);
+            generateObstacles();
+        }
+
+        function jump() {
+            if (isJumping || gameOver) return;
+            isJumping = true;
+            
+            let count = 0;
+            let timerId = setInterval(function () {
+                // Move Down
+                if (count === 15) {
+                    clearInterval(timerId);
+                    let downTimerId = setInterval(function () {
+                        if (count === 0) {
+                            clearInterval(downTimerId);
+                            isJumping = false;
+                        }
+                        playerBottom -= 5;
+                        count--;
+                        player.style.bottom = playerBottom + 'px';
+                    }, 20);
+                }
+                // Move Up
+                playerBottom += 5;
+                count++;
+                player.style.bottom = playerBottom + 'px';
+            }, 20);
+        }
+
+        function generateObstacles() {
+            if (gameOver) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            gameContainer.appendChild(obstacle);
+
+            let obstacleRight = -30;
+
+            let moveObstacle = setInterval(() => {
+                if (gameOver) {
+                    clearInterval(moveObstacle);
+                    return;
+                }
+
+                obstacleRight += gameSpeed;
+                obstacle.style.right = obstacleRight + 'px';
+
+                // Collision Detection
+                const playerRect = player.getBoundingClientRect();
+                const obstacleRect = obstacle.getBoundingClientRect();
+
+                if (
+                    playerRect.left < obstacleRect.right &&
+                    playerRect.right > obstacleRect.left &&
+                    playerRect.bottom > obstacleRect.top &&
+                    playerRect.top < obstacleRect.bottom
+                ) {
+                    endGame();
+                    clearInterval(moveObstacle);
+                }
+
+                if (obstacleRight > gameContainer.offsetWidth + 50) {
+                    obstacle.remove();
+                    clearInterval(moveObstacle);
+                }
+            }, 20);
+
+            // Randomize next obstacle timing
+            let nextObstacleDelay = Math.random() * (2000 - 800) + 800;
+            obstacleTimeout = setTimeout(generateObstacles, nextObstacleDelay);
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+            score++;
+            scoreBoard.textContent = 'Score: ' + score;
+            
+            // Increase speed gradually
+            if (score % 500 === 0) {
+                gameSpeed += 0.2;
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(gameLoopInterval);
+            clearTimeout(obstacleTimeout);
+            finalScoreDisplay.textContent = 'Your Score: ' + score;
+            gameOverScreen.style.display = 'flex';
+            
+            // Haptic Feedback for Telegram
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') jump();
+        });
+
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>
