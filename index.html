@@ -3,164 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spike Escape: Telegram Edition</title>
+    <title>Astro Escape Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --tg-theme-bg-color: #ffffff;
-            --tg-theme-text-color: #222222;
-            --main-blue: #3498db;
-            --main-red: #e74c3c;
-            --main-yellow: #f1c40f;
-        }
-
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            overflow: hidden;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            flex-direction: column;
-        }
-
-        #game-container {
-            width: 90vw;
-            max-width: 500px;
-            height: 250px;
-            background-color: #fff;
-            border: 3px solid #333;
-            position: relative;
-            overflow: hidden;
-            border-radius: 15px;
-            touch-action: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        #player {
-            width: 35px;
-            height: 35px;
-            background-color: var(--main-blue);
-            position: absolute;
-            bottom: 0;
-            left: 50px;
-            border-radius: 8px;
-            z-index: 5;
-            transition: height 0.1s, width 0.1s, background-color 0.2s;
-        }
-
-        #player.crouching {
-            height: 18px;
-            width: 45px;
-            background-color: #2980b9;
-        }
-
-        .obstacle {
-            width: 25px;
-            height: 25px;
-            position: absolute;
-            right: -40px;
-        }
-
-        .spike {
-            background-color: var(--main-red);
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            bottom: 0;
-        }
-
-        .bird {
-            background-color: var(--main-yellow);
-            border-radius: 50%;
-            bottom: 60px;
-        }
-
-        #score-board {
-            margin-top: 15px;
-            font-size: 1.5rem;
-            font-weight: 900;
-        }
-
-        #start-button {
-            padding: 15px 45px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            box-shadow: 0 4px 0 #27ae60;
-        }
-
-        #game-over-screen {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        #leaderboard-list {
-            width: 100%;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            max-height: 120px;
-            overflow-y: auto;
-            border-top: 1px solid #444;
-            padding-top: 10px;
-        }
-
-        #restart-button {
-            margin-top: 15px;
-            padding: 10px 30px;
-            background-color: #f39c12;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
-        .hint {
-            margin-top: 10px;
-            font-size: 0.75rem;
-            opacity: 0.6;
-            text-align: center;
-        }
+        :root { --tg-theme-bg-color: #0b0e14; --tg-theme-text-color: #ffffff; }
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; flex-direction: column; }
+        #game-container { width: 95vw; max-width: 500px; height: 250px; background: linear-gradient(to bottom, #1a1c2c 0%, #4a192c 100%); border: 3px solid #333; position: relative; overflow: hidden; border-radius: 20px; touch-action: none; }
+        #player { width: 40px; height: 40px; position: absolute; bottom: 0; left: 50px; z-index: 5; font-size: 30px; display: flex; justify-content: center; align-items: center; transition: transform 0.1s; }
+        #player.crouching { transform: scaleY(0.5); }
+        .obstacle { position: absolute; right: -50px; display: flex; justify-content: center; align-items: center; }
+        .spike { width: 30px; height: 30px; bottom: 0; font-size: 25px; }
+        .bird { width: 35px; height: 35px; bottom: 45px; font-size: 28px; }
+        #score-board { margin-top: 15px; font-size: 1.8rem; font-weight: bold; }
+        #start-button { padding: 15px 40px; font-size: 1.2rem; cursor: pointer; background: #2ecc71; color: white; border: none; border-radius: 50px; margin-bottom: 20px; box-shadow: 0 4px 0 #27ae60; }
+        #game-over-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10; text-align: center; }
+        #leaderboard-list { width: 80%; margin: 15px 0; font-size: 0.9rem; border-top: 1px solid #444; padding-top: 10px; }
+        #restart-button { padding: 10px 30px; background: #f39c12; color: white; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <button id="start-button">START GAME</button>
+    <button id="start-button">START MISSION 🚀</button>
 
     <div id="game-container">
-        <div id="player"></div>
+        <div id="player">👨‍🚀</div>
         <div id="game-over-screen">
-            <h2 style="margin:0; color:var(--main-red)">GAME OVER</h2>
-            <p id="final-score" style="margin:5px 0">Score: 0</p>
-            <div id="leaderboard-list">Loading rankings...</div>
+            <h2 style="color:#e74c3c">MISSION FAILED</h2>
+            <p id="final-score">Score: 0</p>
+            <div id="leaderboard-list">Loading Rankings...</div>
             <button id="restart-button">TRY AGAIN</button>
         </div>
     </div>
 
-    <div id="score-board">Score: 0</div>
-    <div class="hint">Top Half: Jump | Bottom Half: Crouch</div>
+    <div id="score-board">0m</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
+        // BURAYI DEĞİŞTİR: Firebase Console'dan aldığın kendi bilgilerini buraya yapıştır
         const firebaseConfig = {
             apiKey: "AIzaSyATyXHuTvuRTLifr0TAO9YPemITkaIWR7k",
             authDomain: "thorn-game-51a1e.firebaseapp.com",
@@ -170,10 +51,11 @@
             appId: "1:630511119608:web:13299711840ffd7ca9df0d"
         };
 
+        // Firebase başlatılıyor
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Global functions for the game logic
+        // Skoru Kaydetme (Global erişim için window'a bağladık)
         window.saveScoreToDB = async (name, score) => {
             try {
                 await addDoc(collection(db, "leaderboard"), {
@@ -181,17 +63,18 @@
                     score: score,
                     timestamp: new Date()
                 });
-                loadLeaderboard();
-            } catch (e) { console.error("Error saving:", e); }
+                window.loadLeaderboard();
+            } catch (e) { console.error("Firebase Hatası:", e); }
         };
 
+        // Sıralamayı Çekme
         window.loadLeaderboard = async () => {
             const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(5));
             const querySnapshot = await getDocs(q);
-            let html = "<div style='font-weight:bold; margin-bottom:5px'>TOP 5 PLAYERS:</div>";
+            let html = "<b>TOP 5 ASTRONAUTS:</b><br>";
             querySnapshot.forEach((doc) => {
                 const d = doc.data();
-                html += `<div>${d.name}: ${d.score}</div>`;
+                html += `<div>${d.name}: ${d.score}m</div>`;
             });
             document.getElementById('leaderboard-list').innerHTML = html;
         };
@@ -214,22 +97,22 @@
         let score = 0;
         let gameOver = true;
         let gameSpeed = 5;
-        let gameLoop;
-        let obsTimeout;
+        let gameLoop, spawnTimer;
 
         function startGame() {
             gameOver = false;
             score = 0;
             gameSpeed = 5;
-            scoreBoard.textContent = 'Score: 0';
+            scoreBoard.textContent = '0m';
             player.style.bottom = '0px';
+            player.innerHTML = "👨‍🚀";
             gameOverScreen.style.display = 'none';
             startButton.style.display = 'none';
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             
             gameLoop = setInterval(() => {
                 score++;
-                scoreBoard.textContent = 'Score: ' + score;
+                scoreBoard.textContent = score + 'm';
                 if(score % 500 === 0) gameSpeed += 0.5;
             }, 20);
             spawn();
@@ -262,11 +145,12 @@
         function spawn() {
             if (gameOver) return;
             const obs = document.createElement('div');
-            const type = Math.random() > 0.6 ? 'bird' : 'spike';
-            obs.className = 'obstacle ' + type;
+            const isBird = Math.random() > 0.6;
+            obs.className = 'obstacle ' + (isBird ? 'bird' : 'spike');
+            obs.innerHTML = isBird ? "🛸" : "🌵";
             gameContainer.appendChild(obs);
 
-            let x = -40;
+            let x = -50;
             let move = setInterval(() => {
                 if (gameOver) return clearInterval(move);
                 x += gameSpeed;
@@ -274,42 +158,44 @@
 
                 const p = player.getBoundingClientRect();
                 const o = obs.getBoundingClientRect();
-                if (p.left < o.right && p.right > o.left && p.bottom > o.top && p.top < o.bottom) {
+                const tol = 8; 
+
+                if (p.left + tol < o.right && p.right - tol > o.left && 
+                    p.bottom - tol > o.top && p.top + tol < o.bottom) {
                     die();
+                    clearInterval(move);
                 }
                 if (x > 600) { obs.remove(); clearInterval(move); }
             }, 20);
 
-            let next = Math.random() * (1500 - 800) + 800 - (score/50);
-            obsTimeout = setTimeout(spawn, Math.max(next, 600));
+            spawnTimer = setTimeout(spawn, Math.max(Math.random() * 1000 + 700 - (score/30), 500));
         }
 
         function die() {
             gameOver = true;
             clearInterval(gameLoop);
-            clearTimeout(obsTimeout);
-            finalScoreDisplay.textContent = 'Your Score: ' + score;
+            clearTimeout(spawnTimer);
+            player.innerHTML = "💥";
+            finalScoreDisplay.textContent = 'Distance: ' + score + 'm';
             gameOverScreen.style.display = 'flex';
             
-            const name = tg.initDataUnsafe?.user?.first_name || "Guest";
+            const name = tg.initDataUnsafe?.user?.first_name || "Astronaut";
             if(window.saveScoreToDB) window.saveScoreToDB(name, score);
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         }
 
-        // Controls
-        window.addEventListener('keydown', e => {
+        window.onkeydown = e => {
             if(e.code === 'Space' || e.code === 'ArrowUp') jump();
             if(e.code === 'ArrowDown') crouch(true);
-        });
-        window.addEventListener('keyup', e => {
-            if(e.code === 'ArrowDown') crouch(false);
-        });
+        };
+        window.onkeyup = e => { if(e.code === 'ArrowDown') crouch(false); };
 
-        gameContainer.addEventListener('touchstart', e => {
+        gameContainer.ontouchstart = e => {
+            e.preventDefault();
             const y = e.touches[0].clientY - gameContainer.getBoundingClientRect().top;
             y < 125 ? jump() : crouch(true);
-        });
-        gameContainer.addEventListener('touchend', () => crouch(false));
+        };
+        gameContainer.ontouchend = () => crouch(false);
 
         startButton.onclick = startGame;
         restartButton.onclick = startGame;
