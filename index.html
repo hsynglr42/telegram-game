@@ -9,7 +9,6 @@
         :root {
             --tg-theme-bg-color: #ffffff;
             --tg-theme-text-color: #222222;
-            --tg-theme-button-color: #3498db;
         }
 
         body {
@@ -34,8 +33,7 @@
             position: relative;
             overflow: hidden;
             border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            touch-action: none; /* Disable default touch actions */
+            touch-action: none;
         }
 
         #player {
@@ -47,6 +45,14 @@
             left: 50px;
             border-radius: 6px;
             z-index: 5;
+            transition: height 0.1s, width 0.1s;
+        }
+
+        /* Crouch State */
+        #player.crouching {
+            height: 18px; /* Boyu kısalır */
+            width: 45px;  /* Biraz yayılır */
+            background-color: #2980b9;
         }
 
         .obstacle {
@@ -56,18 +62,16 @@
             right: -40px;
         }
 
-        /* Ground Spike Style */
         .spike {
             background-color: #e74c3c;
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
             bottom: 0;
         }
 
-        /* Flying Bird/Obstacle Style */
         .bird {
             background-color: #f1c40f;
             border-radius: 50%;
-            bottom: 70px; /* High enough to hit if player jumps */
+            bottom: 55px; /* Oyuncu eğilirse altından geçer, zıplarsa çarpar */
         }
 
         #score-board {
@@ -86,7 +90,6 @@
             border-radius: 50px;
             margin-bottom: 20px;
             font-weight: bold;
-            box-shadow: 0 4px 0 #27ae60;
         }
 
         #game-over-screen {
@@ -112,12 +115,11 @@
             cursor: pointer;
         }
 
-        .ground-line {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #333;
+        .controls-hint {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-align: center;
         }
     </style>
 </head>
@@ -126,9 +128,7 @@
     <button id="start-button">START MISSION</button>
 
     <div id="game-container">
-        <div class="ground-line"></div>
         <div id="player"></div>
-        
         <div id="game-over-screen">
             <h2 style="color:#e74c3c">CRASHED!</h2>
             <p id="final-score">Score: 0</p>
@@ -137,6 +137,7 @@
     </div>
 
     <div id="score-board">Score: 0</div>
+    <div class="controls-hint">Tap TOP to Jump | Tap BOTTOM to Crouch<br>Desktop: Space/Up to Jump, Down to Crouch</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -151,6 +152,7 @@
         const restartButton = document.getElementById('restart-button');
 
         let isJumping = false;
+        let isCrouching = false;
         let playerBottom = 0;
         let score = 0;
         let gameOver = true;
@@ -168,7 +170,6 @@
             gameOverScreen.style.display = 'none';
             startButton.style.display = 'none';
 
-            // Clear existing obstacles
             document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
 
             gameLoopInterval = setInterval(updateGame, 20);
@@ -176,12 +177,12 @@
         }
 
         function jump() {
-            if (isJumping || gameOver) return;
+            if (isJumping || isCrouching || gameOver) return;
             isJumping = true;
             
             let jumpHeight = 0;
             let upInterval = setInterval(() => {
-                if (jumpHeight >= 100) {
+                if (jumpHeight >= 110) {
                     clearInterval(upInterval);
                     let downInterval = setInterval(() => {
                         if (jumpHeight <= 0) {
@@ -195,4 +196,112 @@
                         player.style.bottom = playerBottom + 'px';
                     }, 20);
                 } else {
-                    jumpHeight += 5;
+                    jumpHeight += 6;
+                    playerBottom = jumpHeight;
+                    player.style.bottom = playerBottom + 'px';
+                }
+            }, 20);
+        }
+
+        function crouch(active) {
+            if (isJumping || gameOver) return;
+            if (active) {
+                isCrouching = true;
+                player.classList.add('crouching');
+            } else {
+                isCrouching = false;
+                player.classList.remove('crouching');
+            }
+        }
+
+        function generateObstacles() {
+            if (gameOver) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            
+            const type = Math.random() > 0.6 ? 'bird' : 'spike';
+            obstacle.classList.add(type);
+            gameContainer.appendChild(obstacle);
+
+            let obstacleRight = -40;
+
+            let moveObstacle = setInterval(() => {
+                if (gameOver) {
+                    clearInterval(moveObstacle);
+                    return;
+                }
+
+                obstacleRight += gameSpeed;
+                obstacle.style.right = obstacleRight + 'px';
+
+                const p = player.getBoundingClientRect();
+                const o = obstacle.getBoundingClientRect();
+
+                // Advanced Collision
+                if (p.left < o.right && p.right > o.left && p.bottom > o.top && p.top < o.bottom) {
+                    endGame();
+                    clearInterval(moveObstacle);
+                }
+
+                if (obstacleRight > gameContainer.offsetWidth + 50) {
+                    obstacle.remove();
+                    clearInterval(moveObstacle);
+                }
+            }, 20);
+
+            let delay = Math.random() * (1600 - 800) + 800;
+            delay -= Math.min(score / 40, 400);
+            obstacleTimeout = setTimeout(generateObstacles, Math.max(delay, 600));
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+            score++;
+            scoreBoard.textContent = 'Score: ' + score;
+            if (score % 500 === 0) gameSpeed += 0.4;
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(gameLoopInterval);
+            clearTimeout(obstacleTimeout);
+            finalScoreDisplay.textContent = 'Final Score: ' + score;
+            gameOverScreen.style.display = 'flex';
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        }
+
+        // --- Controls ---
+        
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') jump();
+            if (e.code === 'ArrowDown') crouch(true);
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown') crouch(false);
+        });
+
+        // Touch (Split Screen: Top half Jump, Bottom half Crouch)
+        gameContainer.addEventListener('touchstart', (e) => {
+            const touchY = e.touches[0].clientY;
+            const containerRect = gameContainer.getBoundingClientRect();
+            const relativeY = touchY - containerRect.top;
+
+            if (relativeY < containerRect.height / 2) {
+                jump();
+            } else {
+                crouch(true);
+            }
+        });
+
+        gameContainer.addEventListener('touchend', () => {
+            crouch(false);
+        });
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>
